@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#0B1120" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -27,14 +27,17 @@
   input,select{ -webkit-appearance:none; appearance:none; }
   .tnum{ font-variant-numeric:tabular-nums; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
   ::-webkit-scrollbar{ width:0; height:0; }
+
+  /* ----- base (mobile first) ----- */
   .wrap{ max-width:480px; margin:0 auto; min-height:100vh; padding-bottom:calc(76px + env(safe-area-inset-bottom)); }
+  .main{ width:100%; }
   .pad{ padding:calc(16px + env(safe-area-inset-top)) 16px 0; }
-  header{ display:flex; align-items:center; gap:11px; margin-bottom:18px; }
-  header h1{ margin:0; font-size:19px; font-weight:800; }
-  header .sub{ font-size:11px; color:var(--muted); }
+  header.top{ display:flex; align-items:center; gap:11px; margin-bottom:18px; }
+  header.top h1{ margin:0; font-size:19px; font-weight:800; }
+  header.top .sub{ font-size:11px; color:var(--muted); }
   .card{ background:var(--surface); border:1px solid var(--border); border-radius:16px; }
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .col{ display:flex; flex-direction:column; gap:14px; }
+  .col,.home-lower,.plan-cols{ display:flex; flex-direction:column; gap:14px; }
   .stack{ display:flex; flex-direction:column; gap:8px; }
   .stat{ padding:14px; display:flex; flex-direction:column; gap:6px; }
   .stat .lab{ display:flex; align-items:center; gap:6px; color:var(--muted); font-size:12px; }
@@ -59,10 +62,12 @@
   .form{ display:grid; gap:10px; margin-bottom:14px; }
   .chart .head{ display:flex; align-items:center; gap:7px; margin-bottom:6px; }
   .chart .head h3{ margin:0; font-size:15px; font-weight:700; }
+  .chart svg{ height:auto; }
   .chart .axis{ display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:4px; }
   .chart .warn{ margin-top:10px; font-size:12px; color:var(--warn); }
   nav{ position:fixed; left:0; right:0; bottom:0; background:rgba(13,19,33,0.92); backdrop-filter:blur(12px); border-top:1px solid var(--border); padding-bottom:env(safe-area-inset-bottom); }
   nav .inner{ max-width:480px; margin:0 auto; display:flex; }
+  nav .brand{ display:none; }
   nav button{ flex:1; background:transparent; border:none; cursor:pointer; padding:9px 0 11px; display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--muted); }
   nav button.active{ color:var(--pulse); }
   nav button .em{ font-size:20px; opacity:.7; }
@@ -72,6 +77,29 @@
   .assetBig{ font-size:30px; font-weight:800; color:var(--pulse); }
   .note{ font-size:13px; color:var(--muted); margin-top:0; }
   .editRow{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+
+  /* ----- desktop ----- */
+  @media (min-width:768px){
+    .wrap{ max-width:1080px; display:flex; align-items:flex-start; padding-bottom:0; gap:0; }
+    nav{ position:sticky; top:0; left:auto; right:auto; bottom:auto; align-self:flex-start;
+         height:100vh; width:216px; flex-shrink:0; border-top:none; border-right:1px solid var(--border);
+         background:transparent; backdrop-filter:none; padding-bottom:0; }
+    nav .inner{ flex-direction:column; align-items:stretch; padding:20px 12px; gap:4px; max-width:none; }
+    nav .brand{ display:flex; align-items:center; gap:9px; padding:4px 12px 18px; }
+    nav .brand h1{ margin:0; font-size:17px; font-weight:800; }
+    nav .brand .sub{ font-size:11px; color:var(--muted); }
+    nav button{ flex:none; flex-direction:row; justify-content:flex-start; gap:12px; padding:11px 14px; border-radius:10px; }
+    nav button.active{ background:var(--surfaceAlt); }
+    nav button .em{ font-size:18px; opacity:1; }
+    nav button .nl{ font-size:14px; }
+    .main{ flex:1; min-width:0; }
+    header.top{ display:none; }
+    .pad{ padding:26px 32px 48px; }
+    .grid2.stats{ grid-template-columns:repeat(4,1fr); }
+    .home-lower{ display:grid; grid-template-columns:1.5fr 1fr; gap:16px; align-items:start; }
+    .plan-cols{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+    .form .grid2{ gap:12px; }
+  }
 </style>
 </head>
 <body>
@@ -184,14 +212,16 @@ function viewHome(){
     ? '<div class="empty">予定はまだありません。「予定」タブから追加できます。</div>'
     : '<div class="stack">'+up.map(function(e){ return rowHTML({left:e.name,meta:mdLabel(e.date),color:e.kind==="in"?"var(--pulse)":"var(--warn)",right:(e.kind==="in"?"+":"−")+amt(e.amount)}); }).join("")+'</div>';
   return '<div class="col">'
-    + '<div class="grid2">'
+    + '<div class="grid2 stats">'
     + statCard("👛","現在の資産",yen(data.assets),"var(--text)")
     + statCard("💓","90日後の見込み",yen(future),future<0?"var(--warn)":"var(--pulse)",future<assets?"減少傾向":"増加傾向")
     + statCard("🧾","今日使った",yen(todaySpent()),"var(--warn)","今月 "+yen(monthSpent()))
     + statCard("🔁","サブスク月額",yen(subTotal()),"var(--violet)",data.subscriptions.length+"件")
     + '</div>'
+    + '<div class="home-lower">'
     + chartHTML()
     + '<div class="card sec"><div class="head"><h3>直近の予定</h3></div>'+upHTML+'</div>'
+    + '</div>'
     + '</div>';
 }
 function viewDaily(){
@@ -234,7 +264,7 @@ function viewPlan(){
   var inc = data.incomes.slice().sort(function(a,b){return a.date.localeCompare(b.date);}).map(function(e){
     return rowHTML({left:e.name,meta:mdLabel(e.date),color:"var(--pulse)",right:"+"+amt(e.amount),del:"del('incomes','"+e.id+"')"});
   }).join("");
-  return '<div class="col">'
+  return '<div class="plan-cols">'
     + '<div class="card sec"><div class="head"><h3>今後の予定支出</h3><span class="tot" style="color:var(--warn)">'+data.expenses.length+'件</span></div>'
     + '<div class="form">'
     + '<label class="f"><span>項目</span><input class="in" id="ex_name" placeholder="家賃・税金など"></label>'
@@ -260,7 +290,7 @@ function viewAsset(){
       + '<button class="btn" style="background:var(--pulse);color:#06121E" onclick="saveAssets()">✓ 保存</button></div>'
     : '<div class="editRow"><span class="assetBig tnum">'+yen(data.assets)+'</span>'
       + '<button class="btn" style="background:var(--surfaceAlt);color:var(--text);width:auto;padding:9px 14px" onclick="editAssets()">✎ 編集</button></div>';
-  return '<div class="card sec"><div class="head"><h3>現在の資産</h3></div>'
+  return '<div class="card sec" style="max-width:520px"><div class="head"><h3>現在の資産</h3></div>'
     + '<p class="note">今の手持ち（現金・口座残高の合計）を入れてください。ここが残高予測の起点になります。</p>'
     + inner + '</div>';
 }
@@ -283,21 +313,25 @@ function render(){
   var nav = TABS.map(function(t){
     return '<button class="'+(tab===t.id?"active":"")+'" onclick="setTab(\''+t.id+'\')"><span class="em">'+t.em+'</span><span class="nl">'+t.label+'</span></button>';
   }).join("");
+  var brand = '<div class="brand"><svg width="34" height="22" viewBox="0 0 44 28"><path d="M0 14 H10 L14 14 L17 4 L21 24 L25 9 L28 14 H44" fill="none" stroke="var(--pulse)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><div><h1>家計簿</h1><div class="sub">お金の脈をつかむ</div></div></div>';
   document.getElementById("app").innerHTML =
-    '<div class="wrap"><div class="pad">'
-    + '<header><svg width="40" height="26" viewBox="0 0 44 28"><path d="M0 14 H10 L14 14 L17 4 L21 24 L25 9 L28 14 H44" fill="none" stroke="var(--pulse)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    '<div class="wrap">'
+    + '<nav><div class="inner">'+brand+nav+'</div></nav>'
+    + '<div class="main"><div class="pad">'
+    + '<header class="top"><svg width="40" height="26" viewBox="0 0 44 28"><path d="M0 14 H10 L14 14 L17 4 L21 24 L25 9 L28 14 H44" fill="none" stroke="var(--pulse)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     + '<div><h1>家計簿</h1><div class="sub">お金の脈をつかむ</div></div></header>'
     + viewBody()
-    + '</div><nav><div class="inner">'+nav+'</div></nav></div>';
+    + '</div></div>'
+    + '</div>';
 }
 
 /* ---------- actions ---------- */
-function setTab(t){ if(t!=="asset") editingAssets=false; tab=t; render(); }
+function setTab(t){ if(t!=="asset") editingAssets=false; tab=t; render(); window.scrollTo(0,0); }
 function commit(){ save(data); render(); }
 function val(id){ var el=document.getElementById(id); return el?el.value:""; }
 
 function addDaily(){
-  var a=parseFloat(val("d_amt")); if(!a&&a!==0){ return; } if(isNaN(a)) return;
+  var a=parseFloat(val("d_amt")); if(isNaN(a)) return;
   var name=val("d_name").trim(), cat=val("d_cat"), date=val("d_date")||todayStr();
   data.daily.push({ id:uid(), name:name||cat, amount:a, category:cat, date:date });
   commit();
